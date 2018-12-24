@@ -10,37 +10,55 @@ export enum Panel {
 
 @Component('gameState')
 export class GameState {
-  difficulty: number = 0;
-  sequence: Panel[] = [];
-  guessSequence: Panel[];
-  activePanel: Panel | null = null;
-  lockedInput: boolean = true;
+  difficulty: number = 0
+  sequence: Panel[] = []
+  playingIndex: number = 0
+  guessSequence: Panel[] = []
+  activePanel: Panel | null = null
+  lockedInput: boolean = true
+  reset(){
+    this.difficulty = 0
+    this.sequence = []
+    this.guessSequence = []
+    this.activePanel = null
+    this.lockedInput = true
+  }
 }
+
+export class playSequence implements ISystem {
+  update(dt: number) {
+    let color = gameState.sequence[gameState.playingIndex]
+
+  
+  }
+}
+
+engine.addSystem(new playSequence())
 
 
 
 // Materials
 
 let greenOn = new Material()
-greenOn.albedoColor = Color3.FromHexString("#00FF00")
+greenOn.albedoColor = Color3.FromHexString("#00ff00")
 
 let greenOff = new Material()
 greenOff.albedoColor = Color3.FromHexString("#008800")
 
 let redOn = new Material()
-redOn.albedoColor = Color3.FromHexString("#FF0000")
+redOn.albedoColor = Color3.FromHexString("#ff0000")
 
 let redOff = new Material()
 redOff.albedoColor = Color3.FromHexString("#880000")
 
 let yellowOn = new Material()
-yellowOn.albedoColor = Color3.FromHexString("#FFFF00")
+yellowOn.albedoColor = Color3.FromHexString("#ffff00")
 
 let yellowOff = new Material()
 yellowOff.albedoColor = Color3.FromHexString("#888800")
 
 let blueOn = new Material()
-blueOn.albedoColor = Color3.FromHexString("#0000FF")
+blueOn.albedoColor = Color3.FromHexString("#0000ff")
 
 let blueOff = new Material()
 blueOff.albedoColor = Color3.FromHexString("#000088")
@@ -70,10 +88,9 @@ green.add(new Transform({
   scale: new Vector3(2, 2, 2)
 }))
 green.setParent(panels)
-green.add(greenOff)
+green.set(greenOff)
 green.add(new OnClick(e => {
-  gameState.activePanel = Panel.GREEN
-  green.add(greenOn)
+  activatePanel(Panel.GREEN)
 }))
 engine.addEntity(green)
 
@@ -85,10 +102,9 @@ red.add(new Transform({
   scale: new Vector3(2, 2, 2)
 }))
 red.setParent(panels)
-red.add(redOff)
+red.set(redOff)
 red.add(new OnClick(e => {
-  gameState.activePanel = Panel.RED
-  red.add(redOn)
+  activatePanel(Panel.RED)
 }))
 engine.addEntity(red)
 
@@ -100,10 +116,9 @@ yellow.add(new Transform({
   scale: new Vector3(2, 2, 2)
 }))
 yellow.setParent(panels)
-yellow.add(yellowOff)
+yellow.set(yellowOff)
 yellow.add(new OnClick(e => {
-  gameState.activePanel = Panel.YELLOW
-  yellow.add(yellowOn)
+  activatePanel(Panel.YELLOW)
 }))
 engine.addEntity(yellow)
 
@@ -115,10 +130,9 @@ blue.add(new Transform({
   scale: new Vector3(2, 2, 2)
 }))
 blue.setParent(panels)
-blue.add(blueOff)
+blue.set(blueOff)
 blue.add(new OnClick(e => {
-  gameState.activePanel = Panel.BLUE
-  blue.add(blueOn)
+  activatePanel(Panel.BLUE)
 }))
 engine.addEntity(blue)
 
@@ -129,6 +143,10 @@ button.add(new Transform({
   scale: new Vector3(0.5, 0.5, 0.5)
 }))
 button.add(new GLTFShape("models/Simon_Button.gltf"))
+button.add(new OnClick(e => {
+  newGame(0)
+  log("new game")
+}))
 engine.addEntity(button)
 
 let scenery = new Entity()
@@ -141,24 +159,29 @@ engine.addEntity(scenery)
 
 
 
-
-
-
 // // Helper functions
 
-// function newGame(difficulty: number) {
-//     const sequence = randomSequence(difficulty);
+function activatePanel(color: Panel){
+ 
+  color === Panel.BLUE ? blue.set(blueOn) :  blue.set(blueOff)
+  color === Panel.RED ? red.set(redOn) :  red.set(redOff)
+  color === Panel.GREEN ? green.set(greenOn) :  green.set(greenOff)
+  color === Panel.YELLOW ? yellow.set(yellowOn) :  yellow.set(yellowOff)
+  gameState.activePanel = color
+  log("clicked " , color)
 
-//     this.setState({
-//       difficulty,
-//       sequence,
-//       lockedInput: true,
-//       guessSequence: []
-//     });
+}
 
-//     // Play the sequence before allowing the user to play!
-//     await playSequence(sequence);
-//   }
+
+function newGame(difficulty: number) {
+    if (difficulty == 0){
+      gameState.reset()
+    }
+    const sequence = randomSequence(difficulty);
+
+    // Play the sequence before allowing the user to play!
+    //await playSequence(sequence);
+  }
 
 // function playSequence(sequence: Panel[]) {
 //     for (let i = 0; i < sequence.length; i++) {
@@ -176,19 +199,19 @@ engine.addEntity(scenery)
 //     }
 //   }
 
-// function  randomSequence(difficulty: number): Panel[] {
-//     const pool = Object.keys(Panel);
-//     let arr: Panel[] = [];
+function  randomSequence(difficulty: number): Panel[] {
+    const pool = Object.keys(Panel);
+    let arr: Panel[] = [];
 
-//     for (let i = 0; i < difficulty; i++) {
-//       const index = Math.floor(Math.random() * pool.length);
-//       const key = pool[index] as keyof typeof Panel;
-//       const panel = Panel[key] as Panel;
-//       arr.push(panel);
-//     }
+    for (let i = 0; i < difficulty; i++) {
+      const index = Math.floor(Math.random() * pool.length);
+      const key = pool[index] as keyof typeof Panel;
+      const panel = Panel[key] as Panel;
+      arr.push(panel);
+    }
 
-//     return arr;
-//   }
+    return arr;
+  }
 
 // function activatePanel(panel: Panel) {
 //     if (this.state.lockedInput) {
