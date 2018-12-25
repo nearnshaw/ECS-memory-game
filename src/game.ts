@@ -203,6 +203,10 @@ function activatePanel(color: Panel){
   color === Panel.GREEN ? green.set(greenOn) :  green.set(greenOff)
   color === Panel.YELLOW ? yellow.set(yellowOn) :  yellow.set(yellowOff)
   gameState.activePanel = color
+
+  if (gameState.state == State.LISTENING){
+    checkGuess(color)
+  }
   log("clicked " , color)
 
 }
@@ -212,71 +216,47 @@ function newGame(difficulty: number) {
     if (difficulty == 0){
       gameState.reset()
     }
-    const sequence = randomSequence(difficulty);
+    const sequence = randomSequence(difficulty+1);
     gameState.resetPlaying()
     gameState.sequence = sequence
     gameState.state = State.PLAYING
     log("stated playing", gameState.sequence)
   }
 
-// function playSequence(sequence: Panel[]) {
-//     for (let i = 0; i < sequence.length; i++) {
-//       const panel = sequence[i];
-//       this.setState({ activePanel: panel });
-
-//       await sleep(500);
-
-//       this.setState({
-//         activePanel: null,
-//         lockedInput: i !== sequence.length - 1
-//       });
-
-//       await sleep(500);
-//     }
-//   }
 
 function  randomSequence(difficulty: number): Panel[] {
-    const pool = Object.keys(Panel);
-    let arr: Panel[] = [];
+    const pool = Object.keys(Panel)
+    let arr: Panel[] = []
 
     for (let i = 0; i < difficulty; i++) {
-      const index = Math.floor(Math.random() * pool.length);
-      const key = pool[index] as keyof typeof Panel;
-      const panel = Panel[key] as Panel;
-      arr.push(panel);
+      const index = Math.floor(Math.random() * pool.length)
+      const key = pool[index] as keyof typeof Panel
+      const panel = Panel[key] as Panel
+      arr.push(panel)
     }
 
-    return arr;
+    return arr
   }
 
-// function activatePanel(panel: Panel) {
-//     if (this.state.lockedInput) {
-//       return;
-//     }
+function checkGuess(color: Panel) {
 
-//     const nextSequence = [...this.state.guessSequence, panel];
+    gameState.guessSequence.push(color)
+    log(gameState.guessSequence)
 
-//     if (this.state.sequence[this.state.guessSequence.length] !== panel) {
-//       // loser
-//       log("You lose!");
-//       this.setState({ lockedInput: true, sequence: [], guessSequence: [] });
-//       return;
-//     }
+    if (gameState.sequence[gameState.guessSequence.length] !== color) {
+      // loser
+      log("You lose!")
+      gameState.reset()
+      gameState.state = State.IDLE
+      return
+    }
 
-//     this.setState({
-//       activePanel: panel,
-//       guessSequence: nextSequence
-//     });
+  
 
-//     await sleep(500);
-
-//     this.setState({ activePanel: null });
-
-//     if (nextSequence.length === this.state.sequence.length) {
-//       // Winner winner chicken dinner
-//       console.log("You win! Keep going!");
-//       await sleep(500);
-//       this.newGame(this.state.difficulty + 1);
-//       return;
-//     }
-//   }
+    if (gameState.guessSequence.length === gameState.sequence.length) {
+      // Winner winner chicken dinner
+      log("You win! Keep going!");
+      newGame(gameState.difficulty + 1);
+      return
+    }
+  }
