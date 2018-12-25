@@ -7,12 +7,20 @@ export enum Panel {
   BLUE = "blue"
 }
 
+export enum State {
+  PLAYING = "playing",
+  LISTENING = "listening",
+  IDLE = "idle"
+}
+
 
 @Component('gameState')
 export class GameState {
+  state: State = State.IDLE
   difficulty: number = 0
   sequence: Panel[] = []
   playingIndex: number = 0
+  displayTime: number = 1
   guessSequence: Panel[] = []
   activePanel: Panel | null = null
   lockedInput: boolean = true
@@ -22,14 +30,33 @@ export class GameState {
     this.guessSequence = []
     this.activePanel = null
     this.lockedInput = true
+    this.playingIndex = 0
+    this.displayTime = 1
+  }
+  resetPlaying(){
+    this.playingIndex = 0
+    this.displayTime = 1
+  }
+  resetGuessing(){
+    this.guessSequence = []
+    this.activePanel = null
   }
 }
 
 export class playSequence implements ISystem {
   update(dt: number) {
-    let color = gameState.sequence[gameState.playingIndex]
-
-  
+    if (gameState.state == State.PLAYING){
+      gameState.displayTime -= dt
+      if ( gameState.displayTime<0){
+        let color = gameState.sequence[gameState.playingIndex]
+        activatePanel(color)
+        gameState.displayTime = 1
+        gameState.playingIndex += 1
+        if(gameState.playingIndex == gameState.sequence.length){
+          gameState.state = State.LISTENING
+        }
+      }
+    }  
   }
 }
 
@@ -90,7 +117,9 @@ green.add(new Transform({
 green.setParent(panels)
 green.set(greenOff)
 green.add(new OnClick(e => {
-  activatePanel(Panel.GREEN)
+  if (gameState.state == State.LISTENING){
+    activatePanel(Panel.GREEN)
+  }
 }))
 engine.addEntity(green)
 
@@ -104,7 +133,9 @@ red.add(new Transform({
 red.setParent(panels)
 red.set(redOff)
 red.add(new OnClick(e => {
-  activatePanel(Panel.RED)
+  if (gameState.state == State.LISTENING){
+    activatePanel(Panel.RED)
+  }
 }))
 engine.addEntity(red)
 
@@ -118,7 +149,9 @@ yellow.add(new Transform({
 yellow.setParent(panels)
 yellow.set(yellowOff)
 yellow.add(new OnClick(e => {
-  activatePanel(Panel.YELLOW)
+  if (gameState.state == State.LISTENING){
+    activatePanel(Panel.YELLOW)
+  }
 }))
 engine.addEntity(yellow)
 
@@ -132,7 +165,9 @@ blue.add(new Transform({
 blue.setParent(panels)
 blue.set(blueOff)
 blue.add(new OnClick(e => {
-  activatePanel(Panel.BLUE)
+  if (gameState.state == State.LISTENING){
+    activatePanel(Panel.BLUE)
+  }
 }))
 engine.addEntity(blue)
 
@@ -178,9 +213,10 @@ function newGame(difficulty: number) {
       gameState.reset()
     }
     const sequence = randomSequence(difficulty);
-
-    // Play the sequence before allowing the user to play!
-    //await playSequence(sequence);
+    gameState.resetPlaying()
+    gameState.sequence = sequence
+    gameState.state = State.PLAYING
+    log("stated playing", gameState.sequence)
   }
 
 // function playSequence(sequence: Panel[]) {
