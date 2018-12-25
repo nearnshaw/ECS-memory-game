@@ -206,8 +206,9 @@ function activatePanel(color: Panel){
 
   if (gameState.state == State.LISTENING){
     checkGuess(color)
+    log("clicked " , color)
   }
-  log("clicked " , color)
+ 
 
 }
 
