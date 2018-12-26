@@ -30,11 +30,11 @@ export class GameState {
     this.guessSequence = []
     this.activePanel = null
     this.lockedInput = true
-    this.playingIndex = 0
+    this.playingIndex = -1
     this.displayTime = 1
   }
   resetPlaying(){
-    this.playingIndex = 0
+    this.playingIndex = -1
     this.displayTime = 1
     this.sequence = []
     this.guessSequence = []
@@ -56,6 +56,7 @@ export class playSequence implements ISystem {
         gameState.displayTime = 1
         gameState.playingIndex += 1
         if(gameState.playingIndex == gameState.sequence.length){
+          activatePanel(null)
           gameState.state = State.LISTENING
         }
       }
@@ -202,7 +203,7 @@ engine.addEntity(scenery)
 
 // // Helper functions
 
-function activatePanel(color: Panel){
+function activatePanel(color: Panel | null){
 
   // ugly workaround
   blue.remove(Material)
