@@ -1,4 +1,5 @@
 
+let TIME_ON = 0.3
 
 export enum Panel {
   GREEN = "green",
@@ -20,43 +21,59 @@ export class GameState {
   difficulty: number = 0
   sequence: Panel[] = []
   playingIndex: number = 0
-  displayTime: number = 1
+  gapTime: number = 0.5
   guessSequence: Panel[] = []
-  activePanel: Panel | null = null
+  //activePanel: Panel | null = null
   lockedInput: boolean = true
   reset(){
     this.difficulty = 0
     this.sequence = []
     this.guessSequence = []
-    this.activePanel = null
+    //this.activePanel = null
     this.lockedInput = true
     this.playingIndex = -1
-    this.displayTime = 1
+    this.gapTime =  0.5
   }
   resetPlaying(){
     this.playingIndex = -1
-    this.displayTime = 1
+    this.gapTime =  0.5
     this.sequence = []
     this.guessSequence = []
-    this.activePanel = null
+    //this.activePanel = null
   }
   resetGuessing(){
     this.guessSequence = []
-    this.activePanel = null
+    //this.activePanel = null
   }
 }
+
+@Component('panelState')
+export class PanelState {
+  onColor: Material
+  offColor: Material
+  color: Panel
+  active: boolean = false
+  timeLeft: number = TIME_ON
+  constructor(on: Material, off: Material, panel: Panel){
+    this.onColor = on
+    this.offColor = off
+    this.color = panel 
+  }
+}
+
+const panels = engine.getComponentGroup(PanelState)
+
 
 export class playSequence implements ISystem {
   update(dt: number) {
     if (gameState.state == State.PLAYING){
-      gameState.displayTime -= dt
-      if ( gameState.displayTime<0){
+      gameState.gapTime -= dt
+      if ( gameState.gapTime<0){
         let color = gameState.sequence[gameState.playingIndex]
         activatePanel(color)
-        gameState.displayTime = 1
+        gameState.gapTime =  0.5
         gameState.playingIndex += 1
         if(gameState.playingIndex == gameState.sequence.length){
-          activatePanel(null)
           gameState.state = State.LISTENING
         }
       }
@@ -66,7 +83,28 @@ export class playSequence implements ISystem {
 
 engine.addSystem(new playSequence())
 
+export class activatePanels implements ISystem {
+  update(dt: number) {
+    for( let panel of panels.entities){
+      let p = panel.get(PanelState)
+      if (p.active){
+        panel.remove(Material)
+        panel.set(p.onColor)
+        p.timeLeft -= dt
+        if (p.timeLeft < 0){
+          p.active = false
+        }
+      }
+      else {
+          panel.remove(Material)
+        panel.set(p.offColor)
+      }
+    }
+  }
+}
 
+engine.addSystem(new activatePanels())
+   
 
 // Materials
 
@@ -106,24 +144,25 @@ game.add(gameState)
 
 // Scenery objects
 
-let panels = new Entity()
-panels.add(new GLTFShape("models/Simon.gltf"))
-panels.add(new Transform({
+let board = new Entity()
+board.add(new GLTFShape("models/Simon.gltf"))
+board.add(new Transform({
   position: new Vector3(5, 1.5, 5),
   rotation: Quaternion.Euler(90, 0, 0),
   scale: new Vector3(0.5, 0.5, 0.5)
 })) 
-engine.addEntity(panels)
+engine.addEntity(board)
 
 let green = new Entity()
 green.set(greenOff)
 green.add(new PlaneShape())
+green.add(new PanelState(greenOn, greenOff, Panel.GREEN))
 green.add(new Transform({
   position: new Vector3(1, 0, -1),
   rotation: Quaternion.Euler(90, 0, 0),
   scale: new Vector3(2, 2, 2)
 }))
-green.setParent(panels)
+green.setParent(board)
 green.add(new OnClick(e => {
   if (gameState.state == State.LISTENING){
     activatePanel(Panel.GREEN)
@@ -133,12 +172,13 @@ engine.addEntity(green)
 
 let red = new Entity()
 red.add(new PlaneShape())
+red.add(new PanelState(redOn, redOff, Panel.RED))
 red.add(new Transform({
   position: new Vector3(1, 0, 1),
   rotation: Quaternion.Euler(90, 0, 0),
   scale: new Vector3(2, 2, 2)
 }))
-red.setParent(panels)
+red.setParent(board)
 red.set(redOff)
 red.add(new OnClick(e => {
   if (gameState.state == State.LISTENING){
@@ -149,12 +189,13 @@ engine.addEntity(red)
 
 let yellow = new Entity()
 yellow.add(new PlaneShape())
+yellow.add(new PanelState(yellowOn, yellowOff, Panel.YELLOW))
 yellow.add(new Transform({
   position: new Vector3(-1, 0, -1),
   rotation: Quaternion.Euler(90, 0, 0),
   scale: new Vector3(2, 2, 2)
 }))
-yellow.setParent(panels)
+yellow.setParent(board)
 yellow.set(yellowOff)
 yellow.add(new OnClick(e => {
   if (gameState.state == State.LISTENING){
@@ -165,12 +206,13 @@ engine.addEntity(yellow)
 
 let blue = new Entity()
 blue.add(new PlaneShape())
+blue.add(new PanelState(blueOn, blueOff, Panel.BLUE))
 blue.add(new Transform({
   position: new Vector3(-1, 0, 1),
   rotation: Quaternion.Euler(90, 0, 0),
   scale: new Vector3(2, 2, 2)
 }))
-blue.setParent(panels)
+blue.setParent(board)
 blue.set(blueOff)
 blue.add(new OnClick(e => {
   if (gameState.state == State.LISTENING){
@@ -203,26 +245,48 @@ engine.addEntity(scenery)
 
 // // Helper functions
 
-function activatePanel(color: Panel | null){
+function activatePanel(color: Panel){
 
-  // ugly workaround
-  blue.remove(Material)
-  red.remove(Material)
-  green.remove(Material)
-  yellow.remove(Material)
+  // // ugly workaround
+  // blue.remove(Material)
+  // red.remove(Material)
+  // green.remove(Material)
+  // yellow.remove(Material)
  
-  color === Panel.BLUE ? blue.set(blueOn) :  blue.set(blueOff)
-  color === Panel.RED ? red.set(redOn) :  red.set(redOff)
-  color === Panel.GREEN ? green.set(greenOn) :  green.set(greenOff)
-  color === Panel.YELLOW ? yellow.set(yellowOn) :  yellow.set(yellowOff)
-  gameState.activePanel = color
+  // color === Panel.BLUE ? blue.set(blueOn) :  blue.set(blueOff)
+  // color === Panel.RED ? red.set(redOn) :  red.set(redOff)
+  // color === Panel.GREEN ? green.set(greenOn) :  green.set(greenOff)
+  // color === Panel.YELLOW ? yellow.set(yellowOn) :  yellow.set(yellowOff)
+  // gameState.activePanel = color
+
+  for( let panel of panels.entities ){
+    let p = panel.get(PanelState)
+    if (p.color === color){
+      p.active = true
+      p.timeLeft = TIME_ON
+    } else {
+      p.active = false
+    }
+  }
+ 
 
   if (gameState.state == State.LISTENING){
     log("clicked " , color)
     checkGuess(color)
   }
- 
+}
 
+function allOff(){
+  // ugly workaround
+  blue.remove(Material)
+  red.remove(Material)
+  green.remove(Material)
+  yellow.remove(Material)
+
+  blue.set(blueOff)
+  red.set(redOff)
+  green.set(greenOff)
+  yellow.set(yellowOff)
 }
 
 
@@ -253,6 +317,7 @@ function  randomSequence(difficulty: number): Panel[] {
   }
 
 function checkGuess(color: Panel) {
+    
 
     gameState.guessSequence.push(color)
     log(gameState.guessSequence)
