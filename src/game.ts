@@ -36,6 +36,9 @@ export class GameState {
   resetPlaying(){
     this.playingIndex = 0
     this.displayTime = 1
+    this.sequence = []
+    this.guessSequence = []
+    this.activePanel = null
   }
   resetGuessing(){
     this.guessSequence = []
@@ -108,6 +111,7 @@ panels.add(new Transform({
 engine.addEntity(panels)
 
 let green = new Entity()
+green.set(greenOff)
 green.add(new PlaneShape())
 green.add(new Transform({
   position: new Vector3(1, 0, -1),
@@ -115,7 +119,6 @@ green.add(new Transform({
   scale: new Vector3(2, 2, 2)
 }))
 green.setParent(panels)
-green.set(greenOff)
 green.add(new OnClick(e => {
   if (gameState.state == State.LISTENING){
     activatePanel(Panel.GREEN)
@@ -180,7 +183,6 @@ button.add(new Transform({
 button.add(new GLTFShape("models/Simon_Button.gltf"))
 button.add(new OnClick(e => {
   newGame(0)
-  log("new game")
 }))
 engine.addEntity(button)
 
@@ -197,6 +199,12 @@ engine.addEntity(scenery)
 // // Helper functions
 
 function activatePanel(color: Panel){
+
+  // ugly workaround
+  blue.remove(Material)
+  red.remove(Material)
+  green.remove(Material)
+  yellow.remove(Material)
  
   color === Panel.BLUE ? blue.set(blueOn) :  blue.set(blueOff)
   color === Panel.RED ? red.set(redOn) :  red.set(redOff)
@@ -205,8 +213,8 @@ function activatePanel(color: Panel){
   gameState.activePanel = color
 
   if (gameState.state == State.LISTENING){
-    checkGuess(color)
     log("clicked " , color)
+    checkGuess(color)
   }
  
 
@@ -221,7 +229,7 @@ function newGame(difficulty: number) {
     gameState.resetPlaying()
     gameState.sequence = sequence
     gameState.state = State.PLAYING
-    log("stated playing", gameState.sequence)
+    log("stated playing, diff: ", difficulty, " seq: ", gameState.sequence)
   }
 
 
@@ -244,7 +252,7 @@ function checkGuess(color: Panel) {
     gameState.guessSequence.push(color)
     log(gameState.guessSequence)
 
-    if (gameState.sequence[gameState.guessSequence.length] !== color) {
+    if (gameState.sequence[gameState.guessSequence.length-1] !== color) {
       // loser
       log("You lose!")
       gameState.reset()
