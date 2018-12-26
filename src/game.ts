@@ -71,24 +71,28 @@ engine.addSystem(new playSequence())
 
 let greenOn = new Material()
 greenOn.albedoColor = Color3.FromHexString("#00ff00")
+greenOn.emissiveColor = Color3.FromHexString("#00ff00")
 
 let greenOff = new Material()
 greenOff.albedoColor = Color3.FromHexString("#008800")
 
 let redOn = new Material()
 redOn.albedoColor = Color3.FromHexString("#ff0000")
+redOn.emissiveColor = Color3.FromHexString("#ff0000")
 
 let redOff = new Material()
 redOff.albedoColor = Color3.FromHexString("#880000")
 
 let yellowOn = new Material()
 yellowOn.albedoColor = Color3.FromHexString("#ffff00")
+yellowOn.emissiveColor = Color3.FromHexString("#ffff00")
 
 let yellowOff = new Material()
 yellowOff.albedoColor = Color3.FromHexString("#888800")
 
 let blueOn = new Material()
 blueOn.albedoColor = Color3.FromHexString("#0000ff")
+blueOn.emissiveColor = Color3.FromHexString("#0000ff")
 
 let blueOff = new Material()
 blueOff.albedoColor = Color3.FromHexString("#000088")
