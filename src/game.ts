@@ -59,6 +59,10 @@ export class PanelState {
     this.offColor = off
     this.color = panel 
   }
+  activate(){
+    this.active = true
+    this.timeLeft = TIME_ON
+  }
 }
 
 const panels = engine.getComponentGroup(PanelState)
@@ -247,23 +251,10 @@ engine.addEntity(scenery)
 
 function activatePanel(color: Panel){
 
-  // // ugly workaround
-  // blue.remove(Material)
-  // red.remove(Material)
-  // green.remove(Material)
-  // yellow.remove(Material)
- 
-  // color === Panel.BLUE ? blue.set(blueOn) :  blue.set(blueOff)
-  // color === Panel.RED ? red.set(redOn) :  red.set(redOff)
-  // color === Panel.GREEN ? green.set(greenOn) :  green.set(greenOff)
-  // color === Panel.YELLOW ? yellow.set(yellowOn) :  yellow.set(yellowOff)
-  // gameState.activePanel = color
-
   for( let panel of panels.entities ){
     let p = panel.get(PanelState)
     if (p.color === color){
-      p.active = true
-      p.timeLeft = TIME_ON
+      p.activate()
     } else {
       p.active = false
     }
@@ -276,18 +267,7 @@ function activatePanel(color: Panel){
   }
 }
 
-function allOff(){
-  // ugly workaround
-  blue.remove(Material)
-  red.remove(Material)
-  green.remove(Material)
-  yellow.remove(Material)
 
-  blue.set(blueOff)
-  red.set(redOff)
-  green.set(greenOff)
-  yellow.set(yellowOff)
-}
 
 
 function newGame(difficulty: number) {
@@ -298,6 +278,7 @@ function newGame(difficulty: number) {
     gameState.resetPlaying()
     gameState.sequence = sequence
     gameState.state = State.PLAYING
+
     log("stated playing, diff: ", difficulty, " seq: ", gameState.sequence)
   }
 
@@ -323,19 +304,26 @@ function checkGuess(color: Panel) {
     log(gameState.guessSequence)
 
     if (gameState.sequence[gameState.guessSequence.length-1] !== color) {
-      // loser
-      log("You lose!")
-      gameState.reset()
-      gameState.state = State.IDLE
+      lose()
       return
     }
-
-  
 
     if (gameState.guessSequence.length === gameState.sequence.length) {
       // Winner winner chicken dinner
       log("You win! Keep going!");
-      newGame(gameState.difficulty + 1);
+      gameState.difficulty += 1
+      newGame(gameState.difficulty);
       return
     }
   }
+
+
+function lose(){
+  log("You lose!")
+  gameState.reset()
+  gameState.state = State.IDLE
+  for( let panel of panels.entities ){
+    let p = panel.get(PanelState)
+    p.activate()
+  }
+}
