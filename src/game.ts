@@ -67,6 +67,21 @@ export class PanelState {
 
 const panels = engine.getComponentGroup(PanelState)
 
+@Component('buttonData')
+export class ButtonData {
+  yUp: number = 0
+  yDown: number = 0
+  pressed: boolean
+  fraction: number
+  timeDown: number
+  constructor(yUp: number, yDown: number){
+    this.yUp = yUp
+    this.yDown = yDown
+    this.pressed = false
+    this.fraction = 0
+    this.timeDown = 2
+  }
+}
 
 export class playSequence implements ISystem {
   update(dt: number) {
@@ -109,6 +124,33 @@ export class activatePanels implements ISystem {
 
 engine.addSystem(new activatePanels())
    
+
+export class PushButton implements ISystem {
+  update(dt: number) {
+
+    let transform = button.get(Transform)
+    let state = button.get(ButtonData)
+    if (state.pressed == true){
+      if (state.fraction < 1){
+        transform.position.y = Scalar.Lerp(state.yUp, state.yDown, state.fraction)
+        state.fraction += 1/8
+      }
+      state.timeDown -= dt
+      if (state.timeDown < 0){
+        state.pressed = false
+        state.timeDown = 2
+      }
+    }
+    else if (state.pressed == false && state.fraction > 0){
+      transform.position.y = Scalar.Lerp(state.yUp, state.yDown, state.fraction)
+      state.fraction -= 1/8
+    }
+  }
+  
+}
+
+engine.addSystem(new PushButton())
+
 
 // Materials
 
@@ -162,7 +204,7 @@ green.set(greenOff)
 green.add(new PlaneShape())
 green.add(new PanelState(greenOn, greenOff, Panel.GREEN))
 green.add(new Transform({
-  position: new Vector3(1, 0, -1),
+  position: new Vector3(1, 0.05, -1),
   rotation: Quaternion.Euler(90, 0, 0),
   scale: new Vector3(2, 2, 2)
 }))
@@ -178,7 +220,7 @@ let red = new Entity()
 red.add(new PlaneShape())
 red.add(new PanelState(redOn, redOff, Panel.RED))
 red.add(new Transform({
-  position: new Vector3(1, 0, 1),
+  position: new Vector3(1, 0.05, 1),
   rotation: Quaternion.Euler(90, 0, 0),
   scale: new Vector3(2, 2, 2)
 }))
@@ -195,7 +237,7 @@ let yellow = new Entity()
 yellow.add(new PlaneShape())
 yellow.add(new PanelState(yellowOn, yellowOff, Panel.YELLOW))
 yellow.add(new Transform({
-  position: new Vector3(-1, 0, -1),
+  position: new Vector3(-1, 0.05, -1),
   rotation: Quaternion.Euler(90, 0, 0),
   scale: new Vector3(2, 2, 2)
 }))
@@ -212,7 +254,7 @@ let blue = new Entity()
 blue.add(new PlaneShape())
 blue.add(new PanelState(blueOn, blueOff, Panel.BLUE))
 blue.add(new Transform({
-  position: new Vector3(-1, 0, 1),
+  position: new Vector3(-1, 0.05, 1),
   rotation: Quaternion.Euler(90, 0, 0),
   scale: new Vector3(2, 2, 2)
 }))
@@ -226,21 +268,21 @@ blue.add(new OnClick(e => {
 engine.addEntity(blue)
 
 let button = new Entity()
+button.setParent(board)
 button.add(new Transform({
-  position: new Vector3(5, 1.5, 5),
-  rotation: Quaternion.Euler(90, 0, 0),
-  scale: new Vector3(0.5, 0.5, 0.5)
+  position: new Vector3(0, 0.05, 0),
 }))
 button.add(new GLTFShape("models/Simon_Button.gltf"))
+button.add(new ButtonData(0.07, -0.05))
 button.add(new OnClick(e => {
   newGame(0)
+  button.get(ButtonData).pressed = true
 }))
 engine.addEntity(button)
 
 let scenery = new Entity()
 scenery.add(new Transform({
   position : new Vector3(5, 0.05, 5)
-  // scale 0.99 ?
 }))
 scenery.add(new GLTFShape("models/Simon_scene.gltf"))
 engine.addEntity(scenery)
@@ -259,8 +301,6 @@ function activatePanel(color: Panel){
       p.active = false
     }
   }
- 
-
   if (gameState.state == State.LISTENING){
     log("clicked " , color)
     checkGuess(color)
