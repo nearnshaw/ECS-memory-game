@@ -23,13 +23,11 @@ export class GameState {
   playingIndex: number = 0
   gapTime: number = 0.5
   guessSequence: Panel[] = []
-  //activePanel: Panel | null = null
   lockedInput: boolean = true
   reset(){
     this.difficulty = 0
     this.sequence = []
     this.guessSequence = []
-    //this.activePanel = null
     this.lockedInput = true
     this.playingIndex = -1
     this.gapTime =  0.5
@@ -39,11 +37,6 @@ export class GameState {
     this.gapTime =  0.5
     this.sequence = []
     this.guessSequence = []
-    //this.activePanel = null
-  }
-  resetGuessing(){
-    this.guessSequence = []
-    //this.activePanel = null
   }
 }
 
