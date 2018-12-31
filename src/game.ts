@@ -2,16 +2,17 @@
 let TIME_ON = 0.3
 
 export enum Panel {
-  GREEN = "green",
-  RED = "red",
-  YELLOW = "yellow",
-  BLUE = "blue"
+  GREEN,
+  RED,
+  YELLOW,
+  BLUE
 }
 
+
 export enum State {
-  PLAYING = "playing",
-  LISTENING = "listening",
-  IDLE = "idle"
+  PLAYING,
+  LISTENING,
+  IDLE
 }
 
 
